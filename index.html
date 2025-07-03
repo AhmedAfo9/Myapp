@@ -1747,7 +1747,7 @@
             height: 18px;
             /* لم نعد بحاجة لهامش هنا */
         }
-        .modal-actions-footer {
+        ..modal-actions-footer {
             padding-top: 15px;
             margin-top: 15px;
             border-top: 1px solid var(--border-color);
@@ -1755,6 +1755,53 @@
             justify-content: center;
             gap: 10px;
         }
+
+        /* >>> الصق الكود الجديد هنا <<< */
+        /* تنسيق الملاحظة المتحركة */
+        .marquee-container {
+            width: 100%;
+            overflow: hidden;
+            background-color: var(--bg-color);
+            border-radius: 4px;
+        }
+        .marquee-text {
+            display: inline-block;
+            color: var(--secondary-color);
+            font-size: 0.8rem;
+            white-space: nowrap;
+            padding: 4px 0;
+            animation: marquee 15s linear infinite;
+        }
+        @keyframes marquee {
+            0%   { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* === بداية كود قوة كلمة المرور === */
+        .modal-content.password-weak {
+            border: 2px solid var(--danger-color);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--danger-color) 30%, transparent);
+        }
+        .modal-content.password-medium {
+            border: 2px solid var(--warning-color);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--warning-color) 30%, transparent);
+        }
+        .modal-content.password-strong {
+            border: 2px solid var(--success-color);
+            box-shadow: 0 0 15px color-mix(in srgb, var(--success-color) 30%, transparent);
+        }
+        #loginPasswordInput.input-error {
+            border: 2px solid var(--danger-color) !important;
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        /* === نهاية كود قوة كلمة المرور === */
+
+    </style>
     </style>
 </head>
 <body>
@@ -1778,6 +1825,8 @@
                 <p><strong>الوظيفة:</strong> EFL TUTOR</p>
                 <p><strong>الهواية:</strong> Programming</p>
                 <p><strong>للتواصل:</strong> <a href="https://t.me/ahmedyakuz" target="_blank" rel="noopener noreferrer">𝗙𝗼𝗹𝗹𝗼𝘄 𝗺𝗲 →</a></p>
+                
+                <p id="setPasswordLink" style="color: var(--danger-color); cursor: pointer; font-weight: bold;">تعيين كلمة المرور</p>
                 <div class="dark-mode-toggle-container">
                     <label for="darkModeToggle">تفعيل الوضع الليلي</label>
                     <label class="toggle-switch">
@@ -2231,6 +2280,7 @@
             let appData = {};
             let isFocusModeActive = false;
             let currentOralTestType = null; // 'mid-year' or 'end-of-year'
+            const PASSWORD_KEY = 'academicGradesAppPassword';
             const APP_DATA_KEY = 'multiLevelGradesApp_v28_finalFixes'; 
             const STUDENT_NAME_COL_WIDTH_KEY = 'studentNameColWidth_v28';
             const DARK_MODE_KEY = 'darkModePreference_v28';
@@ -2352,6 +2402,123 @@
 
             const developerInfoHamburger = document.getElementById('developerInfoHamburger');
             const developerInfoModal = document.getElementById('developerInfoModal');
+            const setPasswordLink = document.getElementById('setPasswordLink');
+            const setPasswordModal = document.getElementById('setPasswordModal');
+            const passwordInput = document.getElementById('passwordInput');
+            const confirmPasswordInput = document.getElementById('confirmPasswordInput');
+            const savePasswordBtn = document.getElementById('savePasswordBtn');
+            const cancelSetPasswordBtn = document.getElementById('cancelSetPasswordBtn');
+            const passwordStrengthStatus = document.getElementById('password-strength-status');
+            const loginModal = document.getElementById('loginModal');
+            const loginPasswordInput = document.getElementById('loginPasswordInput');
+            const loginBtn = document.getElementById('loginBtn');
+            // ================== بداية كود ميزة كلمة المرور ==================
+
+            function checkPasswordStrength(password) {
+                const hasLetters = /[a-zA-Z]/.test(password) || /[\u0600-\u06FF]/.test(password); // حروف إنجليزية أو عربية
+                const hasNumbers = /[0-9]/.test(password);
+                const hasSymbols = /[^a-zA-Z0-9\u0600-\u06FF]/.test(password);
+                const isLongEnough = password.length >= 8;
+
+                if (isLongEnough && hasLetters && hasNumbers && hasSymbols) {
+                    return 'strong';
+                }
+                if (isLongEnough && ((hasLetters && hasNumbers) || (hasLetters && hasSymbols) || (hasNumbers && hasSymbols))) {
+                    return 'medium';
+                }
+                if (password.length > 0) {
+                    return 'weak';
+                }
+                return 'none'; // لا يوجد إدخال
+            }
+
+            function handlePasswordCheck() {
+                const password = passwordInput.value;
+                const strength = checkPasswordStrength(password);
+                const modalContent = setPasswordModal.querySelector('.modal-content');
+                modalContent.classList.remove('password-weak', 'password-medium', 'password-strong');
+                savePasswordBtn.disabled = false;
+
+                switch (strength) {
+                    case 'strong':
+                        modalContent.classList.add('password-strong');
+                        passwordStrengthStatus.textContent = 'كلمة مرور قوية';
+                        passwordStrengthStatus.style.color = 'var(--success-color)';
+                        break;
+                    case 'medium':
+                        modalContent.classList.add('password-medium');
+                        passwordStrengthStatus.textContent = 'كلمة مرور متوسطة';
+                        passwordStrengthStatus.style.color = 'var(--warning-color)';
+                        break;
+                    case 'weak':
+                        modalContent.classList.add('password-weak');
+                        passwordStrengthStatus.textContent = 'كلمة مرور ضعيفة';
+                        passwordStrengthStatus.style.color = 'var(--danger-color)';
+                        savePasswordBtn.disabled = true;
+                        break;
+                    default:
+                        passwordStrengthStatus.textContent = '';
+                        break;
+                }
+            }
+
+            if(setPasswordLink) {
+                setPasswordLink.addEventListener('click', () => {
+                    developerInfoModal.classList.remove('active');
+                    developerInfoHamburger.classList.remove('active');
+                    setPasswordModal.classList.add('active');
+                    passwordInput.value = '';
+                    confirmPasswordInput.value = '';
+                    handlePasswordCheck();
+                    updateBodyScrollLock();
+                });
+            }
+
+            if(cancelSetPasswordBtn) {
+                cancelSetPasswordBtn.addEventListener('click', () => {
+                    setPasswordModal.classList.remove('active');
+                    const modalContent = setPasswordModal.querySelector('.modal-content');
+                    modalContent.classList.remove('password-weak', 'password-medium', 'password-strong');
+                    updateBodyScrollLock();
+                });
+            }
+            
+            if(passwordInput) {
+                passwordInput.addEventListener('input', handlePasswordCheck);
+            }
+
+            if(savePasswordBtn) {
+                savePasswordBtn.addEventListener('click', () => {
+                    const password = passwordInput.value;
+                    const confirmPassword = confirmPasswordInput.value;
+                    const strength = checkPasswordStrength(password);
+
+                    if (password !== confirmPassword) {
+                        showCustomConfirm("كلمتا المرور غير متطابقتين!", "خطأ");
+                        return;
+                    }
+
+                    if (password.length > 0 && strength === 'weak') {
+                        showCustomConfirm("لا يمكن استخدام كلمة مرور ضعيفة.", "خطأ");
+                        return;
+                    }
+                    
+                    if (password.length > 0) {
+                        localStorage.setItem(PASSWORD_KEY, password);
+                        showCustomConfirm("تم حفظ كلمة المرور بنجاح.", "نجاح");
+                    } else {
+                        localStorage.removeItem(PASSWORD_KEY);
+                        showCustomConfirm("تم إزالة كلمة المرور بنجاح.", "نجاح");
+                    }
+                    
+                    setPasswordModal.classList.remove('active');
+                    const modalContent = setPasswordModal.querySelector('.modal-content');
+                    modalContent.classList.remove('password-weak', 'password-medium', 'password-strong');
+                    updateBodyScrollLock();
+                });
+            }
+            
+            // ================== نهاية كود ميزة كلمة المرور ===================
             const closeDeveloperInfoModalBtn = document.getElementById('closeDeveloperInfoModalBtn');
             const darkModeToggle = document.getElementById('darkModeToggle');
 
@@ -3421,6 +3588,7 @@
                 oralTestBtn.dataset.enabled = hasStudents;
             }
 
+
             function calculateOralTestRow(row) {
                 const listeningInput = row.querySelector('.oral-listening');
                 const speakingInput = row.querySelector('.oral-speaking');
@@ -4241,6 +4409,57 @@
                     }
                 });
             }
+            if(setPasswordLink) {
+                setPasswordLink.addEventListener('click', () => {
+                    developerInfoModal.classList.remove('active');
+                    developerInfoHamburger.classList.remove('active');
+                    setPasswordModal.classList.add('active');
+                    passwordInput.value = '';
+                    confirmPasswordInput.value = '';
+                    handlePasswordCheck();
+                    updateBodyScrollLock();
+                });
+            }
+
+            if(cancelSetPasswordBtn) {
+                cancelSetPasswordBtn.addEventListener('click', () => {
+                    setPasswordModal.classList.remove('active');
+                    updateBodyScrollLock();
+                });
+            }
+            
+            if(passwordInput) {
+                passwordInput.addEventListener('input', handlePasswordCheck);
+            }
+
+            if(savePasswordBtn) {
+                savePasswordBtn.addEventListener('click', () => {
+                    const password = passwordInput.value;
+                    const confirmPassword = confirmPasswordInput.value;
+                    const strength = checkPasswordStrength(password);
+
+                    if (password !== confirmPassword) {
+                        showCustomConfirm("كلمتا المرور غير متطابقتين!", "خطأ");
+                        return;
+                    }
+
+                    if (password.length > 0 && strength === 'weak') {
+                        showCustomConfirm("لا يمكن استخدام كلمة مرور ضعيفة.", "خطأ");
+                        return;
+                    }
+                    
+                    if (password.length > 0) {
+                        localStorage.setItem(PASSWORD_KEY, password);
+                        showCustomConfirm("تم حفظ كلمة المرور بنجاح.", "نجاح");
+                    } else {
+                        localStorage.removeItem(PASSWORD_KEY);
+                        showCustomConfirm("تم إزالة كلمة المرور بنجاح.", "نجاح");
+                    }
+                    
+                    setPasswordModal.classList.remove('active');
+                    updateBodyScrollLock();
+                });
+            }
 
             if (developerInfoHamburger) {
                 developerInfoHamburger.addEventListener('click', (e) => {
@@ -4680,7 +4899,37 @@
                 });
             }
 
-            loadAppData();
+            // --- بداية لوجيك قفل التطبيق ---
+            const savedPassword = localStorage.getItem(PASSWORD_KEY);
+            if (savedPassword) {
+                loginModal.style.display = 'flex'; // استخدام style مباشرة لإظهاره قبل كل شيء
+
+                loginBtn.addEventListener('click', () => {
+                    if (loginPasswordInput.value === savedPassword) {
+                        loginModal.style.display = 'none';
+                        loadAppData(); // تحميل بيانات التطبيق بعد النجاح في تسجيل الدخول
+                        navigateToPage(document.querySelector('.page.active')?.id || 'page-main-selection');
+                    } else {
+                        loginPasswordInput.classList.add('input-error');
+                        setTimeout(() => {
+                           loginPasswordInput.classList.remove('input-error');
+                        }, 500);
+                    }
+                });
+                
+                loginPasswordInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        loginBtn.click();
+                    }
+                });
+
+            } else {
+                // إذا لم تكن هناك كلمة مرور، قم بتحميل التطبيق كالمعتاد
+                loadAppData();
+                const initialActivePage = document.querySelector('.page.active');
+                navigateToPage(initialActivePage?.id || 'page-main-selection');
+            }
+            // --- نهاية لوجيك قفل التطبيق ---
             const initialActivePage = document.querySelector('.page.active');
             navigateToPage(initialActivePage?.id || 'page-main-selection'); 
         });
@@ -4713,4 +4962,28 @@
         </div>
     </div>
 
+    <div id="setPasswordModal" class="modal">
+        <div class="modal-content">
+            <h3>تعيين / تغيير كلمة المرور</h3>
+            <p style="font-size: 0.85rem; text-align: center; color: var(--secondary-color); margin-bottom: 15px;">لإزالة الحماية، اترك الحقول فارغة واضغط حفظ.</p>
+            
+            <input type="password" id="passwordInput" placeholder="أدخل كلمة المرور الجديدة" style="margin-bottom: 10px;">
+            <input type="password" id="confirmPasswordInput" placeholder="تأكيد كلمة المرور" style="margin-bottom: 10px;">
+            
+            <p id="password-strength-status" style="text-align: center; font-weight: bold; min-height: 20px; transition: color 0.3s ease;"> </p>
+
+            <div class="modal-actions-footer" style="margin-top: 15px;">
+                <button id="savePasswordBtn" class="btn btn-success">حفظ</button>
+                <button id="cancelSetPasswordBtn" class="btn btn-secondary">إلغاء</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="loginModal" class="modal" style="background-color: var(--bg-color); z-index: 9998; display: none;">
+         <div class="modal-content">
+            <h3>الرجاء إدخال كلمة المرور</h3>
+            <input type="password" id="loginPasswordInput" placeholder="كلمة المرور" style="margin-bottom: 20px;">
+            <button id="loginBtn" class="btn btn-primary" style="width: 100%;">دخول</button>
+        </div>
+    </div>
     </html>
