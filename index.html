@@ -4674,7 +4674,10 @@
             }
 
             if (backToMainTableBtn) {
-                backToMainTableBtn.addEventListener('click', () => navigateToPage('page-grades-table'));
+                backToMainTableBtn.addEventListener('click', () => {
+                    saveAppData(); // <<< السطر الجديد والمهم لحفظ البيانات
+                    navigateToPage('page-grades-table');
+                });
             }
 
             loadAppData();
