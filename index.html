@@ -3448,13 +3448,19 @@
                         showCustomConfirm("الرجاء إدخال أسماء الطلاب أولاً.", "تنبيه");
                         return;
                     }
-                    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `student_names_${new Date().toISOString().slice(0,10)}.txt`;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
+
+                    // --- بداية الطريقة الجديدة باستخدام data: URL ---
+                    const fileName = `student_names_${new Date().toISOString().slice(0,10)}.txt`;
+                    const dataUrl = 'data:text/plain;charset=utf-8;base64,' + btoa(unescape(encodeURIComponent(text)));
+                    
+                    const linkElement = document.createElement('a');
+                    linkElement.href = dataUrl;
+                    linkElement.download = fileName;
+                    
+                    document.body.appendChild(linkElement);
+                    linkElement.click();
+                    document.body.removeChild(linkElement);
+                    // --- نهاية الطريقة الجديدة ---
                 });
             }
             
@@ -4338,18 +4344,35 @@
                 try {
                     const dataToExport = isFullExport ? appData : { [currentGradeKey]: { [currentSection]: appData[currentGradeKey]?.[currentSection] || [] } };
                     const dataStr = JSON.stringify(dataToExport, null, 2);
-                    const blob = new Blob([dataStr], {type: "application/json;charset=utf-8"});
                     const timestamp = new Date().toISOString().slice(0, 10);
                     const fileName = isFullExport ? `backup_all_${timestamp}.json` : `backup_${currentGradeKey}_${currentSection.replace(/[ \/]/g, '_')}_${timestamp}.json`;
+
+                    // --- بداية الطريقة الجديدة باستخدام data: URL ---
+
+                    // 1. إنشاء رابط بيانات base64
+                    // btoa() تقوم بتحويل النص إلى صيغة base64
+                    // unescape(encodeURIComponent()) تضمن أن الحروف العربية والرموز تعمل بشكل صحيح
+                    const dataUrl = 'data:application/json;charset=utf-8;base64,' + btoa(unescape(encodeURIComponent(dataStr)));
                     
-                    // استخدام FileSaver.js لحفظ الملف
-                    saveAs(blob, fileName);
+                    // 2. إنشاء عنصر رابط وهمي في الذاكرة
+                    const linkElement = document.createElement('a');
+                    linkElement.href = dataUrl;
+                    linkElement.download = fileName;
+
+                    // 3. محاكاة النقر على الرابط لبدء التنزيل
+                    document.body.appendChild(linkElement); // يجب إضافته للصفحة ليعمل في كل البيئات
+                    linkElement.click();
+                    document.body.removeChild(linkElement); // حذف الرابط بعد بدء التنزيل
+
+                    // --- نهاية الطريقة الجديدة ---
 
                     exportModal.classList.remove('active');
                     updateBodyScrollLock();
+                    showSuccessIndicator('✓', 'var(--success-color)');
+
                 } catch (error) {
-                    console.error("Export failed:", error);
-                    showCustomConfirm("فشل تصدير البيانات. قد لا تكون هذه الميزة مدعومة في بيئة التطبيق الحالية.", "خطأ في التصدير");
+                    console.error("Export failed with new method:", error);
+                    showCustomConfirm("فشل تصدير البيانات. حدث خطأ غير متوقع.", "خطأ في التصدير");
                 }
             }
 
