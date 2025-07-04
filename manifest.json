@@ -1,7 +1,7 @@
 {
   "name": "إدارة الدرجات الأكاديمية",
   "short_name": "الدرجات",
-  "start_url": ".",
+  "start_url": "/Myapp/",
   "display": "standalone",
   "background_color": "#eef2f7",
   "theme_color": "#0056b3",

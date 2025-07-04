@@ -1,10 +1,10 @@
 const CACHE_NAME = 'academic-grades-cache-v1';
 // قائمة الملفات التي سيتم تخزينها لتعمل أوفلاين
 const urlsToCache = [
-  './', // الصفحة الرئيسية
-  './manifest.json', // ملف التعريف
-  // يمكنك إضافة أسماء ملفات CSS أو JS أخرى إذا كانت لديك
-  // الملفات الخارجية التي يعتمد عليها تطبيقك
+  '/Myapp/',
+  '/Myapp/index.html', // إضافة الصفحة الرئيسية بشكل صريح
+  '/Myapp/manifest.json',
+  // لا حاجة لتغيير الروابط الخارجية
   'https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&family=Noto+Naskh+Arabic:wght@400;700&display=swap',
   'https://cdn.tailwindcss.com/',
   'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js',
